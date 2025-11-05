@@ -5,5 +5,7 @@ from django.contrib.auth.models import User
 
 class Chats(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    model_name = models.CharField(max_length=100)
-    content = models.TextField()
+    content = models.JSONField('Chats', default=dict)
+    chat_id = models.IntegerField()
+    time_stamp = models.DateField()
+    title = models.CharField(max_length=50)

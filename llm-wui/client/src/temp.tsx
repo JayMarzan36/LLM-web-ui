@@ -17,11 +17,12 @@ export default function TApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [selected_model, set_selected_model] = useState("gemma3:4b");
   const [web_search, set_web_search] = useState(false);
-  const [current_chat_id, set_current_chat_id] = useState("1");
+  const [current_chat_id, set_current_chat_id] = useState("0");
   const [chats, set_chats] = useState<Chat[]>([]);
   const [settings_open, set_settings_open] = useState(false);
-  const [ollama_http, set_ollama_http] = useState("http://127.0.0.1:55833");
+  const [ollama_http, set_ollama_http] = useState("http://127.0.0.1:11434");
   const [api_url, set_api_url] = useState("");
+  const [message_counter, set_message_counter] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [model_name, set_model_name] = useState("");
@@ -46,35 +47,51 @@ export default function TApp() {
   //     }
   //   }
 
-  async function send_chat(web_search: boolean) {
+  async function send_chat(user_message: Message, web_search: boolean) {
     const make_request = use_fetch();
 
     let response;
     const target_uri = "send_chat"
 
     const body = {
+      chat_id: current_chat_id,
+      counter: message_counter,
       ollama_url: ollama_http,
       search_url: web_search_url,
       search_web: web_search,
-      model_name: model_name,
-      prompt: prompt,
+      model_name: selected_model,
+      message: user_message,
     };
-
-    console.log(`Target URI: ${target_uri}\nMethod: POST\nBody: ${body}`);
 
     response = await make_request(target_uri, "POST", body);
 
-
-
     if (response.ok) {
       const response_data = await response.json();
-      // TODO: update values and things inside this, if you return things it will return this function as a promise.
+      const model_response = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: response_data["response"]
+      }
+      set_messages((prev) => [...prev, model_response])
 
-      console.log(response_data);
     } else {
       toast.error("Error Talking with Model");
     }
     setIsLoading(false);
+  }
+
+  async function delete_chat(chat_id: string) {
+    const make_request = use_fetch();
+    const response = await make_request("delete_chat", "DELETE", {"chat_id":chat_id});
+    if (response.ok) {
+      const temp = await response.json()
+      const response_result = temp["response"]
+      if (response_result === "Success") {
+        toast.success("Deleted chat")
+      } else {
+        toast.error("Error deleting chat")
+      }
+    }
   }
 
   const scroll_to_bottom = () => {
@@ -89,36 +106,27 @@ export default function TApp() {
 
   const handle_new_chat = () => {
     const newChat = {
-      id: Date.now().toString(),
+      id: current_chat_id,
       title: "New Chat",
       timestamp: new Date(),
     };
     set_chats((prev) => [newChat, ...prev]);
-    set_current_chat_id(newChat.id);
-    set_messages([
-      {
-        id: "1",
-        role: "assistant",
-        content: "Hello! I'm an AI assistant. How can I help you today?",
-      },
-    ]);
+    set_current_chat_id(newChat.id + 1);
   };
 
-  const handle_select_chat = (chatId: string) => {
-    set_current_chat_id(chatId);
+  const handle_select_chat = (chat_id: string) => {
+    set_current_chat_id(chat_id);
     // In a real app, you would load the messages for this chat
     //TODO: Add function for loading message from database
   };
 
-  const handle_delete_chat = (chatId: string) => {
-    set_chats((prev) => prev.filter((chat) => chat.id !== chatId));
-    // If deleting the current chat, switch to another or create new
-    // TODO: Make sure to delete chat on database end as well
-    if (chatId === current_chat_id) {
-      const remainingChats = chats.filter((chat) => chat.id !== chatId);
+  const handle_delete_chat = (chat_id: string) => {
+    set_chats((prev) => prev.filter((chat) => chat.id !== chat_id));
+    delete_chat(chat_id)
+    if (chat_id === current_chat_id) {
+      const remainingChats = chats.filter((chat) => chat.id !== chat_id);
       if (remainingChats.length > 0) {
         set_current_chat_id(remainingChats[0].id);
-        set_messages(initialMessages);
       } else {
         handle_new_chat();
       }
@@ -126,15 +134,19 @@ export default function TApp() {
   };
 
   const handle_send_message = (content: string, attachments?: Attachment[]) => {
-    const userMessage = {
-      id: Date.now().toString(),
+    const user_message = {
+      id: message_counter,
       role: "user",
       content,
       attachments,
     };
-    set_messages((prev) => [...prev, userMessage]);
+    set_message_counter(user_message.id + 1)
+    if (chats.length === 0) {
+      handle_new_chat();
+    }
+    set_messages((prev) => [...prev, user_message]);
     setIsLoading(true);
-    send_chat(web_search)
+    send_chat(user_message, web_search);
   };
 
   return (

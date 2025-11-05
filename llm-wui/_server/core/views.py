@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.conf  import settings
 import json
+import datetime
 import os
 import requests
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-
+from core.models import Chats
 # Load manifest when server launches
 MANIFEST = {}
 if not settings.DEBUG:
@@ -24,19 +25,35 @@ def index(req):
     return render(req, "core/index.html", context)
 
 @login_required
+def delete_chat(req):
+    if req.method == "DELETE":
+        try:
+            body = json.loads(req.body)
+            chat_id = body["chat_id"]
+            chat = Chats.objects.get(user=req.user, chat_id=chat_id)
+            chat.delete()
+            return JsonResponse({"response": "Success"})
+        except:
+            return JsonResponse({"response": "Failed"})
+        
+
+@login_required
 def send_chat(req):
     if req.method == "POST":
         body = json.loads(req.body)
+        current_chat_id = body["chat_id"]
+        interaction_counter = body["counter"]
         web_url = body["search_web"]
-        ollama_url = body["ollama_url"]
-        prompt = None
+        ollama_url = body["ollama_url"] + "/api/generate"
+        user_message = body["message"]
+
         if body["search_web"]:
-            search_result = web_search(web_url, body["prompt"])
+            search_result = web_search(web_url, user_message["content"])
             prompt = f"""
             You are an assistant that answers questions based on web search results.
 
             Question:
-            {body["prompt"]}
+            {user_message["content"]}
 
             Here are the top search results (in JSON):
             {search_result}
@@ -58,25 +75,74 @@ def send_chat(req):
             }
             """
         else:
-            prompt = body["prompt"]
+            prompt = user_message["content"]
 
         payload = {
             "model" : body["model_name"],
-            "messages": prompt,
-            "temperature": 0.7
+            "prompt": prompt,
         }
-        headers = {
-            "Content-Type": "application/json"
-        }
+
         try:
-            response = requests.post(ollama_url, headers=headers, data=json.dumps(payload))
-            response.raise_for_status()
-            print(response)
-            #TODO: Save data for database for chat history
-            return JsonResponse({"response": response.json()})
+            output = ""
+            with requests.post(ollama_url, json=payload, stream=True) as response:
+                response.raise_for_status()
+
+                for line in response.iter_lines():
+                    if line:
+                        data = json.loads(line.decode("utf-8"))
+                        output += data.get("response", "")
+                        if data.get("done"):
+                            break
+
+                output.strip()
+
+            current_chat, created = Chats.objects.get_or_create(
+                id=current_chat_id,
+                defaults={
+                    "content": {"messages": []},
+                    "user": req.user,
+                    "chat_id": current_chat_id,
+                    "time_stamp": datetime.datetime.now(),
+                    "title": prompt
+                },
+            )
+            if not current_chat and not created:
+                return JsonResponse({"response": "Error creating new chat"})
+
+            if "messages" not in current_chat.content or not isinstance(current_chat.content["messages"], list):
+                current_chat.content["messages"] = []
+
+            new_message = {
+                "id": interaction_counter,
+                "role": 'user',
+                'content': prompt
+            }
+
+            new_response = {
+                "id": interaction_counter + 1,
+                'role': 'assistant',
+                'content': output
+            }
+            current_chat.content['messages'].append(new_message)
+            current_chat.content["messages"].append(new_response)
+
+            current_chat.save()
+
+            return JsonResponse({"response": output})
         except requests.exceptions.RequestException as e:
-            pass
-    return JsonResponse({"response": "error"})
+            return JsonResponse({"response": "Error getting response"})
+
+@login_required
+def get_history(req):
+    if req.method == "GET":
+        # TODO: Get the history of users chats. Just get the chat details
+        pass
+
+@login_required
+def load_chat(req):
+    if req.method == "GET":
+        # TODO: Get users chat history
+
 
 
 def web_search(sear_xng_url: str, query: str, top_n: int = 5):
@@ -98,3 +164,17 @@ def web_search(sear_xng_url: str, query: str, top_n: int = 5):
         return json.dumps(simplified, indent=2)
     except requests.exceptions.RequestException as e:
         return None
+
+
+def create_chat(chat_id: int, user: str, prompt: str) -> bool:
+    try:
+        Chats.objects.create(
+            user=user,
+            content={"messages": []},
+            chat_id=chat_id,
+            time_stamp=datetime.datetime.now(),
+            title=prompt,
+        )
+        return True
+    except:
+        return False

@@ -16,12 +16,7 @@ interface ChatHeaderProps {
 
 
 const models = [
-  { value: "gpt-4", label: "GPT-4" },
-  { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
-  { value: "claude-3-opus", label: "Claude 3 Opus" },
-  { value: "claude-3-sonnet", label: "Claude 3 Sonnet" },
-  { value: "gemini-pro", label: "Gemini Pro" },
-  { value: "llama-3", label: "Llama 3" },
+  { value: "gemma3:4b", label: "gemma3:4b" },
 ];
 
 export function ChatHeader({
