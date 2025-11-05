@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "llm-wui"
+version = "0.1.0"
+description = ""
+authors = ["Jay Marzan <jaymarzan36@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+django = "^5.0.0"
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
