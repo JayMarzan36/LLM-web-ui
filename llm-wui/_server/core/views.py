@@ -142,6 +142,7 @@ def get_history(req):
 def load_chat(req):
     if req.method == "GET":
         # TODO: Get users chat history
+        pass
 
 
 
