@@ -48,7 +48,7 @@ export function SettingsDialog({
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="api-url">Custom API URL</Label>
+            <Label htmlFor="api-url">Web Search API URL</Label>
             <Input
               id="api-url"
               placeholder="https://api.example.com"
@@ -56,7 +56,7 @@ export function SettingsDialog({
               onChange={(e) => on_api_url_change(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Optional custom API endpoint for LLM requests
+              The URL where your SearXNG is running.
             </p>
           </div>
         </div>
