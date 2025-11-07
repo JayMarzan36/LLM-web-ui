@@ -15,7 +15,7 @@ import { use_fetch } from "./hooks/useFetch";
 export default function TApp() {
   const [messages, set_messages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selected_model, set_selected_model] = useState("gemma3:4b");
+  const [selected_model, set_selected_model] = useState("");
   const [web_search, set_web_search] = useState(false);
   const [current_chat_id, set_current_chat_id] = useState("0");
   const [chats, set_chats] = useState<Chat[]>([]);
@@ -23,6 +23,8 @@ export default function TApp() {
   const [ollama_http, set_ollama_http] = useState("http://127.0.0.1:11434");
   const [api_url, set_api_url] = useState("");
   const [message_counter, set_message_counter] = useState(0);
+  const [settings_loaded, set_settings_loaded] = useState(false);
+  let initial_settings = useRef({ ollama_http: "", api_url: "" });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const [models, set_models] = useState([]);
@@ -46,7 +48,6 @@ export default function TApp() {
         toast.error("Failed to logout");
       }
     } catch (err) {
-      console.error(err);
       toast.error("Logout failed due to network error");
     }
   }
@@ -63,6 +64,7 @@ export default function TApp() {
       ollama_url: ollama_http,
       search_url: web_search_url,
       search_web: web_search,
+      search_web_url: api_url,
       model_name: selected_model,
       message: user_message,
     };
@@ -171,7 +173,9 @@ export default function TApp() {
   async function get_models() {
     const make_request = use_fetch();
     const target_uri = "get_models";
-    const response = await make_request(target_uri, "POST", {"ollama_url":ollama_http});
+    const response = await make_request(target_uri, "POST", {
+      ollama_url: ollama_http,
+    });
     if (response.ok) {
       const temp = await response.json();
       const response_result = temp["response"];
@@ -179,6 +183,44 @@ export default function TApp() {
         toast.error("Error getting models");
       } else {
         set_models(response_result);
+      }
+    }
+  }
+
+  async function update_settings() {
+    const make_request = use_fetch();
+    const target_uri = "update_settings";
+    const response = await make_request(target_uri, "POST", {
+      ollama_url: ollama_http,
+      search_url: api_url,
+    });
+    if (response.ok) {
+      const temp = await response.json();
+      const response_result = temp["response"];
+      if (response_result === "Error") {
+        toast.error("Error updating settings");
+      } else {
+        toast.success("Successfully updated settings");
+      }
+    }
+  }
+
+  async function load_settings() {
+    const make_request = use_fetch();
+    const target_uri = "load_settings";
+    const response = await make_request(target_uri, "GET", "");
+    if (response.ok) {
+      const temp = await response.json();
+      const response_result = temp["response"];
+      if (response_result === "Error") {
+        toast.error("Error loading settings");
+      } else {
+        set_ollama_http(response_result["ollama_url"]);
+        set_api_url(response_result["api_url"]);
+        initial_settings = {
+          ollama_http: response_result["ollama_url"],
+          api_url: response_result["api_url"],
+        };
       }
     }
   }
@@ -240,8 +282,24 @@ export default function TApp() {
 
   useEffect(() => {
     get_chats();
-    get_models();
+    load_settings().then(() => {
+      set_settings_loaded(true);
+    });
   }, []);
+
+  useEffect(() => {
+    get_models();
+  }, [ollama_http]);
+
+  useEffect(() => {
+    if (!settings_loaded) return;
+    const changed =
+      ollama_http !== initial_settings.current.ollama_http ||
+      api_url !== initial_settings.current.api_url;
+    if (changed) {
+      update_settings();
+    }
+  }, [ollama_http, api_url, settings_loaded]);
 
   return (
     <div className="flex h-full min-h-screen bg-background">

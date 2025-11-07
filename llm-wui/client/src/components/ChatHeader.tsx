@@ -26,11 +26,10 @@ export function ChatHeader({
   model_list,
   on_logout,
 }: ChatHeaderProps) {
-  // TODO: Get list of models from Ollama via back end
   let models = [];
 
-  for (const model in model_list) {
-    models.push({ model: model });
+  for (const model of model_list) {
+    models.push({ label: model, value: model });
   }
   return (
     <header className="border-b px-3 py-2 shrink-0">

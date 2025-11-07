@@ -6,7 +6,7 @@ import os
 import requests
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from core.models import Chats
+from core.models import Chats, Settings
 
 # Load manifest when server launches
 MANIFEST = {}
@@ -46,16 +46,16 @@ def send_chat(req):
         body = json.loads(req.body)
         current_chat_id = body["chat_id"]
         interaction_counter = body["counter"]
-        web_url = body["search_web"]
+        web_url = body["search_web_url"]
         ollama_url = body["ollama_url"] + "/api/generate"
         user_message = body["message"]
 
         if body["search_web"]:
             search_result = web_search(web_url, user_message["content"])
-            
+
             if search_result == None:
                 return JsonResponse({"response": "Error getting response"})
-            
+
             prompt = (
                 prompt
             ) = f"""
@@ -112,7 +112,7 @@ def send_chat(req):
                     "user": req.user,
                     "chat_id": current_chat_id,
                     "time_stamp": datetime.datetime.now(),
-                    "title": prompt,
+                    "title": (user_message["content"]),
                 },
             )
             if not current_chat and not created:
@@ -123,7 +123,11 @@ def send_chat(req):
             ):
                 current_chat.content["messages"] = []
 
-            new_message = {"id": interaction_counter, "role": "user", "content": prompt}
+            new_message = {
+                "id": interaction_counter,
+                "role": "user",
+                "content": (user_message["content"]),
+            }
 
             new_response = {
                 "id": interaction_counter + 1,
@@ -139,6 +143,7 @@ def send_chat(req):
 
             return JsonResponse({"response": output})
         except requests.exceptions.RequestException as e:
+            print(e)
             return JsonResponse({"response": "Error getting response"})
 
 
@@ -176,27 +181,69 @@ def load_chat(req):
 def get_models(req):
     if req.method == "POST":
         try:
-            print("Before")
             body = json.loads(req.body)
             ollama_url = body["ollama_url"] + "/api/tags"
             result = []
-            with requests.post(ollama_url) as response:
-                print("In with")
+            with requests.get(ollama_url) as response:
                 response.raise_for_status()
                 temp = response.json()
                 model_list = temp["models"]
-                print("Model list")
                 for model in model_list:
                     result.append(model["name"])
-            return JsonResponse({"response" : result})
+            return JsonResponse({"response": result})
         except:
-            return JsonResponse({"response" : "Error"})
+            return JsonResponse({"response": "Error"})
+
+
+@login_required
+def update_settings(req):
+    if req.method == "POST":
+        try:
+            body = json.loads(req.body)
+            ollama_url = body["ollama_url"]
+            search_url = body["search_url"]
+            user_settings, created = Settings.objects.get_or_create(
+                user=req.user,
+                defaults={
+                    "user": req.user,
+                    "ollama_url": ollama_url,
+                    "search_url": search_url,
+                },
+            )
+            if created:
+                pass
+            else:
+                user_settings.user = req.user
+                user_settings.ollama_url = ollama_url
+                user_settings.search_url = search_url
+                user_settings.save()
+            return JsonResponse({"response": "Successful"})
+        except:
+            return JsonResponse({"response": "Error"})
+
+
+@login_required
+def load_settings(req):
+    if req.method == "GET":
+        try:
+            user_settings = Settings.objects.get(user=req.user)
+
+            return JsonResponse(
+                {
+                    "response": {
+                        "ollama_url": user_settings.ollama_url,
+                        "api_url": user_settings.search_url,
+                    }
+                }
+            )
+        except:
+            return JsonResponse({"response", "Error"})
 
 
 def web_search(sear_xng_url: str, query: str, top_n: int = 5):
     params = {"q": query, "format": "json"}
     try:
-        response = requests.get(f"{sear_xng_url}/search", params=params, timeout=15)
+        response = requests.get(f"{sear_xng_url}/search", params=params, timeout=25)
         response.raise_for_status()
         data = response.json()
         results = data.get("results", [])[:top_n]
@@ -211,6 +258,7 @@ def web_search(sear_xng_url: str, query: str, top_n: int = 5):
         ]
         return json.dumps(simplified, indent=2)
     except requests.exceptions.RequestException as e:
+        print(e)
         return None
 
 
