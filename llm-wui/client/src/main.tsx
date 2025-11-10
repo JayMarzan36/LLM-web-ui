@@ -5,8 +5,8 @@ import { ChatHeader } from "./components/ChatHeader";
 import { ChatHistory } from "./components/ChatHistory";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { ScrollArea } from "./components/ui/scroll-area";
-import { initialMessages, Message, Attachment } from "./data/mockMessages";
-import { Chat, mockChats } from "./data/mockChats";
+import { Message, Attachment } from "./data/mockMessages";
+import { Chat } from "./data/mockChats";
 import {
   send_chat,
   delete_chat,
