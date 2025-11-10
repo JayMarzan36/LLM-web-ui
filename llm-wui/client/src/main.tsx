@@ -7,12 +7,18 @@ import { SettingsDialog } from "./components/SettingsDialog";
 import { ScrollArea } from "./components/ui/scroll-area";
 import { initialMessages, Message, Attachment } from "./data/mockMessages";
 import { Chat, mockChats } from "./data/mockChats";
-import { send_chat, delete_chat, get_chats, load_chat, get_models } from "./components/chat_functions";
+import {
+  send_chat,
+  delete_chat,
+  get_chats,
+  load_chat,
+  get_models,
+} from "./components/chat_functions";
 import { ToastContainer, toast } from "react-toastify";
 
 import { use_fetch } from "./hooks/useFetch";
 
-export default function TApp() {
+export default function App() {
   const [messages, set_messages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selected_model, set_selected_model] = useState("");
@@ -28,12 +34,9 @@ export default function TApp() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [models, set_models] = useState([]);
 
-  // TODO: fix logout function
-  // TODO: add logout button
   async function logout() {
     try {
       const res = await fetch("/registration/logout/", {
-        method: "POST",
         credentials: "same-origin",
       });
 
@@ -46,8 +49,6 @@ export default function TApp() {
       toast.error("Logout failed due to network error");
     }
   }
-
-  
 
   async function update_settings() {
     const make_request = use_fetch();
@@ -111,7 +112,7 @@ export default function TApp() {
   const handle_select_chat = (chat_id: string) => {
     set_current_chat_id(chat_id);
     set_messages([]);
-    load_chat(chat_id);
+    load_chat(chat_id, chats, set_messages, set_message_counter);
   };
 
   const handle_delete_chat = (chat_id: string) => {
@@ -136,7 +137,18 @@ export default function TApp() {
     };
     set_messages((prev) => [...prev, user_message]);
     setIsLoading(true);
-    send_chat(user_message, web_search, current_chat_id, message_counter, ollama_http, api_url, selected_model, set_message_counter, set_messages, setIsLoading);
+    send_chat(
+      user_message,
+      web_search,
+      current_chat_id,
+      message_counter,
+      ollama_http,
+      api_url,
+      selected_model,
+      set_message_counter,
+      set_messages,
+      setIsLoading
+    );
     if (!current_chat_id) {
       handle_new_chat();
     }
@@ -164,7 +176,7 @@ export default function TApp() {
   }, [ollama_http, api_url, settings_loaded]);
 
   return (
-    <div className="flex h-full min-h-screen bg-background dark">
+    <div className="flex h-full min-h-screen bg-background">
       <ToastContainer />
       {/* Sidebar */}
       <div className="w-64 shrink-0">

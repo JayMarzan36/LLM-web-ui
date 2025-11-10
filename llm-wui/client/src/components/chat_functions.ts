@@ -141,7 +141,7 @@ async function load_chat(chat_id: string, chats: Chat[], set_messages: (value: M
   }
 }
 
-async function get_models(ollama_http: string, set_models: (value: string) => void) {
+async function get_models(ollama_http: string, set_models: (value : Array<String>) => void) {
   const make_request = use_fetch();
   const target_uri = "get_models";
   const response = await make_request(target_uri, "POST", {

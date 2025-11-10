@@ -8,7 +8,7 @@ interface ChatMessageProps {
   content: string;
   attachments?: Attachment[];
 }
-
+// TODO: Rethink the format. See if you can display like markdown
 function parseMessageContent(content: string) {
   const parts: Array<{ type: "text" | "code"; content: string; language?: string }> = [];
   const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
@@ -16,7 +16,6 @@ function parseMessageContent(content: string) {
   let match;
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
-    // Add text before code block
     if (match.index > lastIndex) {
       parts.push({
         type: "text",
@@ -24,7 +23,6 @@ function parseMessageContent(content: string) {
       });
     }
 
-    // Add code block
     parts.push({
       type: "code",
       language: match[1] || "plaintext",
@@ -34,7 +32,6 @@ function parseMessageContent(content: string) {
     lastIndex = match.index + match[0].length;
   }
 
-  // Add remaining text
   if (lastIndex < content.length) {
     parts.push({
       type: "text",
