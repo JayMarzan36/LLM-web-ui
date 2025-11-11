@@ -1,7 +1,7 @@
 import { User, Bot, FileText } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { CodeBlock } from "./CodeBlock";
-import { Attachment } from "../data/mockMessages";
+import { Attachment } from "../data/Message";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";

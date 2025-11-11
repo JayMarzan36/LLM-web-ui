@@ -28,6 +28,15 @@ def index(req):
 
 @login_required
 def delete_chat(req):
+    """"
+    Delete a chat from the database
+
+    Args:
+        req (http_request): The user request
+
+    Returns:
+        JsonResponse: Json response of either "Success" or "Failed"
+    """
     if req.method == "DELETE":
         try:
             body = json.loads(req.body)
@@ -39,11 +48,22 @@ def delete_chat(req):
             return JsonResponse({"response": "Failed"})
 
 
-def generate_llm_prompt(req, current_chat_id, body, web_url):
+def generate_llm_prompt(req, current_chat_id: int, body: dict, web_url: str):
     """
     Generates the prompt for the LLM, incorporating previous chat messages
     and the current user message.
+    
+    Args:
+        req (backend request): The user request
+        current_chat_id (int): The current chat id
+        body (dict): The user's request content
+        web_url (str): The url to make a web search to
+    
+    Returns:
+        If search_result = None, JsonResponse: {"response", "Error getting response"}
+        json: {"mode": body["model_name"], "prompt", prompt}
     """
+    
     previous_chats = None
     try:
         chat = Chats.objects.get(chat_id=current_chat_id, user=req.user)
@@ -79,6 +99,12 @@ def send_chat(req):
     """
     Handles the sending of a chat message, including LLM interaction and
     message storage.
+    
+    Args:
+        req (backend request): user request
+    
+    Returns:
+        JsonResponse: A response message of either {"response": either of the following "Error creating new chat", "Error getting response", or output}
     """
     if req.method == "POST":
         body = json.loads(req.body)
@@ -148,6 +174,15 @@ def send_chat(req):
 
 @login_required
 def get_chats(req):
+    """
+    Get users chat history
+
+    Args:
+        req (backend request: user request
+
+    Returns:
+        JsonResponse: {"response": either user_return or "Error"}
+    """
     if req.method == "GET":
         try:
             user_chats = Chats.objects.filter(user=req.user)
@@ -165,6 +200,15 @@ def get_chats(req):
 
 @login_required
 def load_chat(req):
+    """
+    Load a specific chat
+
+    Args:
+        req (backend request): user request
+
+    Returns:
+        JsonResponse: {"response": either user_return or "Error"}
+    """
     if req.method == "POST":
         try:
             body = json.loads(req.body)
@@ -178,6 +222,15 @@ def load_chat(req):
 
 @login_required
 def get_models(req):
+    """
+    Get list of available models
+
+    Args:
+        req (backend request): user request
+
+    Returns:
+        JsonResponse: {"response": either result or "Error"}
+    """
     if req.method == "POST":
         try:
             body = json.loads(req.body)
@@ -196,6 +249,15 @@ def get_models(req):
 
 @login_required
 def update_settings(req):
+    """
+    Update user settings
+
+    Args:
+        req (backend request): user request
+
+    Returns:
+        JsonResponse: {"response": either "Successful" or "Error"}
+    """
     if req.method == "POST":
         try:
             body = json.loads(req.body)
@@ -223,6 +285,15 @@ def update_settings(req):
 
 @login_required
 def load_settings(req):
+    """
+    Load/Get user settings
+
+    Args:
+        req (backend request): user request
+
+    Returns:
+        JsonResponse: {"response": either {"ollama_url": user_settings.ollama_url, "api_url": user_settings.search_url} or "Error"}
+    """
     if req.method == "GET":
         try:
             user_settings = Settings.objects.get(user=req.user)
@@ -240,6 +311,19 @@ def load_settings(req):
 
 
 def web_search(sear_xng_url: str, query: str, top_n: int = 5):
+    """
+    Web search
+
+    Args:
+        sear_xng_url (str): searxng url
+        query (str): user's query
+        top_n (int, optional): The amount of search results to return. Defaults to 5.
+
+    Returns:
+        json: search results
+        or
+        None
+    """
     params = {"q": query, "format": "json"}
     try:
         response = requests.get(f"{sear_xng_url}/search", params=params, timeout=25)
@@ -259,17 +343,3 @@ def web_search(sear_xng_url: str, query: str, top_n: int = 5):
     except requests.exceptions.RequestException as e:
         print(e)
         return None
-
-
-def create_chat(chat_id: int, user: str, prompt: str) -> bool:
-    try:
-        Chats.objects.create(
-            user=user,
-            content={"messages": []},
-            chat_id=chat_id,
-            time_stamp=datetime.datetime.now(),
-            title=prompt,
-        )
-        return True
-    except:
-        return False

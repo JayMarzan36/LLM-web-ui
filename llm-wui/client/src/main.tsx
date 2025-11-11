@@ -5,8 +5,9 @@ import { ChatHeader } from "./components/ChatHeader";
 import { ChatHistory } from "./components/ChatHistory";
 import { SettingsDialog } from "./components/SettingsDialog";
 import { ScrollArea } from "./components/ui/scroll-area";
-import { Message, Attachment } from "./data/mockMessages";
-import { Chat } from "./data/mockChats";
+import { Message, Attachment } from "./data/Message";
+import { Chat } from "./data/Chat";
+import { ToastContainer, toast } from "react-toastify";
 import {
   send_chat,
   delete_chat,
@@ -14,9 +15,10 @@ import {
   load_chat,
   get_models,
 } from "./components/chat_functions";
-import { ToastContainer, toast } from "react-toastify";
-
-import { use_fetch } from "./hooks/useFetch";
+import {
+  update_settings,
+  load_settings,
+} from "./components/settings_functions";
 
 export default function App() {
   const [messages, set_messages] = useState<Message[]>([]);
@@ -30,9 +32,9 @@ export default function App() {
   const [api_url, set_api_url] = useState("");
   const [message_counter, set_message_counter] = useState(0);
   const [settings_loaded, set_settings_loaded] = useState(false);
-  let initial_settings = useRef({ ollama_http: "", api_url: "" });
   const scrollRef = useRef<HTMLDivElement>(null);
   const [models, set_models] = useState([]);
+  let initial_settings = useRef({ ollama_http: "", api_url: "" });
 
   async function logout() {
     try {
@@ -47,44 +49,6 @@ export default function App() {
       }
     } catch (err) {
       toast.error("Logout failed due to network error");
-    }
-  }
-
-  async function update_settings() {
-    const make_request = use_fetch();
-    const target_uri = "update_settings";
-    const response = await make_request(target_uri, "POST", {
-      ollama_url: ollama_http,
-      search_url: api_url,
-    });
-    if (response.ok) {
-      const temp = await response.json();
-      const response_result = temp["response"];
-      if (response_result === "Error") {
-        toast.error("Error updating settings");
-      } else {
-        toast.success("Successfully updated settings");
-      }
-    }
-  }
-
-  async function load_settings() {
-    const make_request = use_fetch();
-    const target_uri = "load_settings";
-    const response = await make_request(target_uri, "GET", "");
-    if (response.ok) {
-      const temp = await response.json();
-      const response_result = temp["response"];
-      if (response_result === "Error") {
-        toast.error("Error loading settings");
-      } else {
-        set_ollama_http(response_result["ollama_url"]);
-        set_api_url(response_result["api_url"]);
-        initial_settings = {
-          ollama_http: response_result["ollama_url"],
-          api_url: response_result["api_url"],
-        };
-      }
     }
   }
 
@@ -156,7 +120,7 @@ export default function App() {
 
   useEffect(() => {
     get_chats(set_chats);
-    load_settings().then(() => {
+    load_settings(set_ollama_http, set_api_url, initial_settings).then(() => {
       set_settings_loaded(true);
     });
   }, []);
@@ -171,7 +135,7 @@ export default function App() {
       ollama_http !== initial_settings.current.ollama_http ||
       api_url !== initial_settings.current.api_url;
     if (changed) {
-      update_settings();
+      update_settings(ollama_http, api_url);
     }
   }, [ollama_http, api_url, settings_loaded]);
 

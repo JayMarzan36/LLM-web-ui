@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import { use_fetch } from "../hooks/useFetch";
-import { Message } from "../data/mockMessages";
-import { Chat } from "../data/mockChats";
+import { Message } from "../data/Message";
+import { Chat } from "../data/Chat";
 
 interface Model {
   id: string;
@@ -18,7 +18,7 @@ async function send_chat(
   selected_model: string,
   set_message_counter: (value: number) => void,
   set_messages: (value: Message[]) => void,
-  setIsLoading: (value: boolean) => void,
+  setIsLoading: (value: boolean) => void
 ) {
   //TODO: Figure out how to use user attachements. Files and pictures.
   try {
@@ -120,7 +120,12 @@ async function get_chats(set_chats: (value: Chat[]) => void) {
   }
 }
 
-async function load_chat(chat_id: string, chats: Chat[], set_messages: (value: Message[]) => void, set_message_counter: (value: number) => void) {
+async function load_chat(
+  chat_id: string,
+  chats: Chat[],
+  set_messages: (value: Message[]) => void,
+  set_message_counter: (value: number) => void
+) {
   if (chats.length > 0) {
     const make_request = use_fetch();
     const body = {
@@ -142,7 +147,10 @@ async function load_chat(chat_id: string, chats: Chat[], set_messages: (value: M
   }
 }
 
-async function get_models(ollama_http: string, set_models: (value : Array<String>) => void) {
+async function get_models(
+  ollama_http: string,
+  set_models: (value: Array<String>) => void
+) {
   const make_request = use_fetch();
   const target_uri = "get_models";
   const response = await make_request(target_uri, "POST", {

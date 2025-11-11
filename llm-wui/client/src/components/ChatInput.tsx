@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { Attachment } from "../data/mockMessages";
+import { Attachment } from "../data/Message";
 
 interface ChatInputProps {
   onSendMessage: (message: string, attachments?: Attachment[]) => void;
@@ -17,7 +17,12 @@ interface ChatInputProps {
   onWebSearchChange: (enabled: boolean) => void;
 }
 
-export function ChatInput({ onSendMessage, disabled, web_search, onWebSearchChange }: ChatInputProps) {
+export function ChatInput({
+  onSendMessage,
+  disabled,
+  web_search,
+  onWebSearchChange,
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +79,9 @@ export function ChatInput({ onSendMessage, disabled, web_search, onWebSearchChan
                 className="relative group inline-flex items-center gap-2 px-2 py-1 bg-muted rounded-md border text-xs"
               >
                 <Paperclip className="h-3 w-3" />
-                <span className="truncate max-w-[150px]">{attachment.name}</span>
+                <span className="truncate max-w-[150px]">
+                  {attachment.name}
+                </span>
                 <Button
                   onClick={() => handleRemoveAttachment(attachment.id)}
                   variant="ghost"
@@ -147,7 +154,9 @@ export function ChatInput({ onSendMessage, disabled, web_search, onWebSearchChan
             </TooltipProvider>
             <Button
               onClick={handleSend}
-              disabled={(!message.trim() && attachments.length === 0) || disabled}
+              disabled={
+                (!message.trim() && attachments.length === 0) || disabled
+              }
               size="icon"
               className="h-[44px] w-[44px]"
             >
