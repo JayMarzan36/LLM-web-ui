@@ -8,7 +8,6 @@ from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from core.models import Chats, Settings
 
-# Load manifest when server launches
 MANIFEST = {}
 if not settings.DEBUG:
     f = open(f"{settings.BASE_DIR}/core/static/manifest.json")
@@ -40,8 +39,47 @@ def delete_chat(req):
             return JsonResponse({"response": "Failed"})
 
 
+def generate_llm_prompt(req, current_chat_id, body, web_url):
+    """
+    Generates the prompt for the LLM, incorporating previous chat messages
+    and the current user message.
+    """
+    previous_chats = None
+    try:
+        chat = Chats.objects.get(chat_id=current_chat_id, user=req.user)
+        previous_chats = chat.content["messages"]
+    except Chats.DoesNotExist:
+        previous_chats = []
+
+    prompt = (
+        f"Previous interactions {previous_chats}\n\nUser: {body['message']["content"]}"
+    )
+
+    if body["search_web"]:
+        search_result = web_search(web_url, body["message"]["content"])
+
+        if search_result == None:
+            return JsonResponse({"response": "Error getting response"})
+
+        prompt += f"""
+        Here are the top search results (in JSON):
+        {search_result}
+
+        When answering, use the information from these search results.
+        Always include your sources explicitly in the response — 
+        for example, cite the URLs or titles from the JSON results that support your answer.
+        If a statement is based on your own reasoning or general knowledge, note that clearly.
+        """
+
+    return {"model": body["model_name"], "prompt": prompt}
+
+
 @login_required
 def send_chat(req):
+    """
+    Handles the sending of a chat message, including LLM interaction and
+    message storage.
+    """
     if req.method == "POST":
         body = json.loads(req.body)
         current_chat_id = body["chat_id"]
@@ -50,46 +88,7 @@ def send_chat(req):
         ollama_url = body["ollama_url"] + "/api/generate"
         user_message = body["message"]
 
-        if body["search_web"]:
-            search_result = web_search(web_url, user_message["content"])
-
-            if search_result == None:
-                return JsonResponse({"response": "Error getting response"})
-
-            prompt = (
-                prompt
-            ) = f"""
-                You are an assistant that answers questions based on web search results.
-
-                Question:
-                {user_message["content"]}
-
-                Here are the top search results (in JSON):
-                {search_result}
-
-                Instructions:
-                1. Read and summarize the key information from the provided search results.
-                2. Write a clear, concise, and factual answer to the user's question.
-                3. At the end of your message, include a "Sources:" section listing the references you used.
-                4. Use markdown links for each source in this format: [Title](URL)
-                5. If the search results don't contain enough information, say that clearly.
-
-                Example output:
-
-                The Eiffel Tower is located in Paris, France. It was constructed between 1887 and 1889 and stands 324 meters tall. The tower is one of the most visited landmarks in the world.
-
-                **Sources:** 
-                [Wikipedia](https://en.wikipedia.org/wiki/Eiffel_Tower)
-                [History.com](https://www.history.com/topics/landmarks/eiffel-tower)
-                """
-
-        else:
-            prompt = user_message["content"]
-
-        payload = {
-            "model": body["model_name"],
-            "prompt": prompt,
-        }
+        payload = generate_llm_prompt(req, current_chat_id, body, web_url)
 
         try:
             output = ""
