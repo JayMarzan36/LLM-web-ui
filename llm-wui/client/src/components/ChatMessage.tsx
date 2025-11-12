@@ -24,7 +24,6 @@ export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
       }`}
     >
       <div className="w-full max-w-4xl mx-auto flex gap-3">
-        {/* Avatar */}
         <Avatar className="h-7 w-7 shrink-0">
           <AvatarFallback
             className={
@@ -40,7 +39,6 @@ export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
         </Avatar>
 
         <div className="flex-1 space-y-2 overflow-hidden">
-          {/* Attachments */}
           {attachments && attachments.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">
               {attachments.map((attachment) => (
@@ -69,8 +67,7 @@ export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
             </div>
           )}
 
-          {/* Message content rendered like ChatGPT */}
-          <div className="prose prose-sm max-w-none dark:prose-invert">
+          <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw]}

@@ -20,7 +20,7 @@ async function send_chat(
   set_messages: (value: Message[]) => void,
   setIsLoading: (value: boolean) => void
 ) {
-  //TODO: Figure out how to use user attachements. Files and pictures.
+
   try {
     const make_request = use_fetch();
 

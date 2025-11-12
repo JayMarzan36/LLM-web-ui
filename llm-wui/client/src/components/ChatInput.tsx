@@ -42,20 +42,21 @@ export function ChatInput({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    const newAttachments: Attachment[] = Array.from(files).map((file) => {
-      const isImage = file.type.startsWith("image/");
+    const newAttachments: Attachment[] = await Promise.all(Array.from(files).map(async (file) => {
+      const file_buffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(file_buffer);
+      const base64String = btoa(String.fromCharCode(...uint8Array));
       return {
-        id: Math.random().toString(36).substring(7),
-        type: isImage ? "image" : "document",
-        name: file.name,
-        url: URL.createObjectURL(file),
-        size: file.size,
+      id: Math.random().toString(36).substring(7),
+      name: file.name,
+      file: base64String,
+      size: file.size,
       };
-    });
+    }));
 
     setAttachments((prev) => [...prev, ...newAttachments]);
     if (fileInputRef.current) {
@@ -111,7 +112,7 @@ export function ChatInput({
               onChange={handleFileSelect}
               className="hidden"
               multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
+              accept="image/*,.pdf,.doc,.docx,.txt,.py,.cpp,.md,.json,.tsx,.jsx,.html,.css,.js"
             />
             <TooltipProvider>
               <Tooltip>

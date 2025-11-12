@@ -7,11 +7,53 @@ import requests
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from core.models import Chats, Settings
+from langchain_ollama import OllamaEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from PyPDF2 import PdfReader
+import base64
 
 MANIFEST = {}
 if not settings.DEBUG:
     f = open(f"{settings.BASE_DIR}/core/static/manifest.json")
     MANIFEST = json.load(f)
+
+
+def extract_text_from_file(file_path: str) -> str:
+    """
+    Extract readable text from a file based on its type.
+
+    Args:
+        file_path (str): file path
+
+    Returns:
+        str: contents of the file
+    """
+    extension = os.path.splitext(file_path)[1].lower()
+    try:
+        if extension in [
+            ".txt",
+            ".py",
+            ".csv",
+            ".json",
+            ".md",
+            ".cpp",
+            ".json",
+            ".js",
+            ".jsx",
+            ".tsx",
+            ".html",
+            ".css",
+        ]:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                return f.read()
+        elif extension == ".pdf":
+            reader = PdfReader(file_path)
+            return "\n".join(page.extract_text() or "" for page in reader.pages)
+        else:
+            return f"[Unsupported file type: {extension}]"
+    except Exception as e:
+        return f"[Error reading file: {e}]"
 
 
 @login_required
@@ -28,7 +70,7 @@ def index(req):
 
 @login_required
 def delete_chat(req):
-    """"
+    """ "
     Delete a chat from the database
 
     Args:
@@ -52,18 +94,18 @@ def generate_llm_prompt(req, current_chat_id: int, body: dict, web_url: str):
     """
     Generates the prompt for the LLM, incorporating previous chat messages
     and the current user message.
-    
+
     Args:
         req (backend request): The user request
         current_chat_id (int): The current chat id
         body (dict): The user's request content
         web_url (str): The url to make a web search to
-    
+
     Returns:
         If search_result = None, JsonResponse: {"response", "Error getting response"}
         json: {"mode": body["model_name"], "prompt", prompt}
     """
-    
+
     previous_chats = None
     try:
         chat = Chats.objects.get(chat_id=current_chat_id, user=req.user)
@@ -71,9 +113,15 @@ def generate_llm_prompt(req, current_chat_id: int, body: dict, web_url: str):
     except Chats.DoesNotExist:
         previous_chats = []
 
-    prompt = (
-        f"Previous interactions {previous_chats}\n\nUser: {body['message']["content"]}"
-    )
+    prompt = "You are a helpful assistant and your response should be in the format of markdown.  Consider the following conversation history:\n"
+    for message in previous_chats:
+        prompt += f"User: {message['content']}\n"
+
+        prompt += f"Assistant: {message['content']}\n"
+
+    prompt += f"User: {body['message']}\n"
+
+    prompt += "Assistant:\n"
 
     if body["search_web"]:
         search_result = web_search(web_url, body["message"]["content"])
@@ -96,79 +144,149 @@ def generate_llm_prompt(req, current_chat_id: int, body: dict, web_url: str):
 
 @login_required
 def send_chat(req):
-    """
-    Handles the sending of a chat message, including LLM interaction and
-    message storage.
-    
-    Args:
-        req (backend request): user request
-    
-    Returns:
-        JsonResponse: A response message of either {"response": either of the following "Error creating new chat", "Error getting response", or output}
-    """
     if req.method == "POST":
         body = json.loads(req.body)
+
         current_chat_id = body["chat_id"]
+
         interaction_counter = body["counter"]
+
         web_url = body["search_web_url"]
+
         ollama_url = body["ollama_url"] + "/api/generate"
+
         user_message = body["message"]
+
+        file_directory = os.path.join(settings.BASE_DIR, "document_storage")
+        os.makedirs(file_directory, exist_ok=True)
+
+        attachments = user_message.get("attachments", [])
+
+        attachment_texts = []
+
+        for i, attachment in enumerate(attachments):
+            file_data = attachment.get("file", "")
+
+            file_ext = attachment.get("extension", "")
+
+            file_name = attachment.get("name", f"attachment_{i}.{file_ext}")
+
+            if not file_data:
+                continue
+
+            try:
+                file_bytes = base64.b64decode(file_data)
+
+            except Exception as e:
+                print(f"Error decoding file: {e}")
+
+                continue
+
+            temp_path = os.path.join(
+                file_directory, f"{req.user}_{interaction_counter}_{file_name}"
+            )
+            with open(temp_path, "wb") as f:
+                f.write(file_bytes)
+
+            extracted_text = extract_text_from_file(temp_path)
+
+            if extracted_text:
+                attachment_texts.append(extracted_text)
+
+        retrieved_chunks = []
+
+        if attachment_texts:
+            all_text = "\n\n".join(attachment_texts)
+
+            splitter = RecursiveCharacterTextSplitter(
+                chunk_size=1000, chunk_overlap=200
+            )
+            docs = splitter.create_documents([all_text])
+
+            try:
+                embeddings = OllamaEmbeddings(model="embeddinggemma:300m")
+
+                vector_store = FAISS.from_documents(docs, embeddings)
+
+                retriever = vector_store.as_retriever(search_kwargs={"k": 5})
+
+                query = user_message.get("content", "")
+
+                results = retriever.invoke(query)
+
+                retrieved_chunks = [doc.page_content for doc in results]
+
+            except Exception as e:
+                print(f"Embedding or retrieval error: {e}")
 
         payload = generate_llm_prompt(req, current_chat_id, body, web_url)
 
+        if retrieved_chunks:
+            payload[
+                "prompt"
+            ] += (
+                "\n\nThe following information was retrieved from uploaded documents:\n"
+            )
+
+            payload["prompt"] += "\n---\n".join(retrieved_chunks)
+
+        elif attachment_texts:
+            payload["prompt"] += "\n\nThe user also uploaded the following files:\n"
+
+            payload["prompt"] += "\n".join(attachment_texts[:2])
+
         try:
             output = ""
+
             with requests.post(ollama_url, json=payload, stream=True) as response:
                 response.raise_for_status()
 
                 for line in response.iter_lines():
                     if line:
                         data = json.loads(line.decode("utf-8"))
+
                         output += data.get("response", "")
+
                         if data.get("done"):
                             break
 
-                output.strip()
+                output = output.strip()
 
             current_chat, created = Chats.objects.get_or_create(
-                id=current_chat_id,
+                chat_id=current_chat_id,
+                user=req.user,
                 defaults={
                     "content": {"messages": []},
-                    "user": req.user,
-                    "chat_id": current_chat_id,
                     "time_stamp": datetime.datetime.now(),
-                    "title": (user_message["content"]),
+                    "title": user_message["content"],
                 },
             )
-            if not current_chat and not created:
-                return JsonResponse({"response": "Error creating new chat"})
 
             if "messages" not in current_chat.content or not isinstance(
                 current_chat.content["messages"], list
             ):
                 current_chat.content["messages"] = []
 
-            new_message = {
-                "id": interaction_counter,
-                "role": "user",
-                "content": (user_message["content"]),
-            }
-
-            new_response = {
-                "id": interaction_counter + 1,
-                "role": "assistant",
-                "content": output,
-            }
-
-            current_chat.content["messages"].append(new_message)
-
-            current_chat.content["messages"].append(new_response)
-
+            current_chat.content["messages"].append(
+                {
+                    "id": interaction_counter,
+                    "role": "user",
+                    "content": user_message["content"],
+                    "attachments": [a["name"] for a in attachments],
+                }
+            )
+            current_chat.content["messages"].append(
+                {
+                    "id": interaction_counter + 1,
+                    "role": "assistant",
+                    "content": output,
+                }
+            )
             current_chat.save()
 
             return JsonResponse({"response": output})
         except requests.exceptions.RequestException as e:
-            print(e)
+            print("Ollama error:", e)
             return JsonResponse({"response": "Error getting response"})
 
 

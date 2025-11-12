@@ -97,7 +97,7 @@ export default function App() {
       id: message_counter,
       role: "user",
       content: content,
-      attachments,
+      attachments: attachments ? attachments : "",
     };
     set_messages((prev) => [...prev, user_message]);
     setIsLoading(true);
