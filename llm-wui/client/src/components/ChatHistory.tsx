@@ -56,7 +56,7 @@ export function ChatHistory({
       {/* Chat List */}
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
-          {chats.length > 0 && chats.map((chat) => (
+          {chats.map((chat) => (
             <div
               key={chat.id}
               className="group relative"

@@ -167,4 +167,4 @@ async function get_models(
   }
 }
 
-export { send_chat, delete_chat, get_chats, load_chat, get_models };
+export { send_chat, delete_chat, get_chats, load_chat, get_models, get_first_four_words };

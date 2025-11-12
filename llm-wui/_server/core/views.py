@@ -157,7 +157,7 @@ def send_chat(req):
 
         user_message = body["message"]
 
-        file_directory = os.path.join(settings.BASE_DIR, "document_storage")
+        file_directory = os.path.join(settings.BASE_DIR, f"document_storage/f{req.user}")
         os.makedirs(file_directory, exist_ok=True)
 
         attachments = user_message.get("attachments", [])
@@ -183,7 +183,7 @@ def send_chat(req):
                 continue
 
             temp_path = os.path.join(
-                file_directory, f"{req.user}_{interaction_counter}_{file_name}"
+                file_directory, f"{req.user}_{current_chat_id}_{interaction_counter}_{file_name}"
             )
             with open(temp_path, "wb") as f:
                 f.write(file_bytes)

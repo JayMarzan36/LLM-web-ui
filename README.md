@@ -9,3 +9,9 @@ This ui, Ollama, and SearXNG will be hosted in their own containers in docker.
 There is a database to keep track of chats between users and models and some user settings.
 
 Using Node for front end and python for the backend and making API calls to Ollama and SearXNG.
+
+# Requirements
+* Ollama
+* embeddinggemma:300m (embedding model)
+## Optional
+* SearXNG

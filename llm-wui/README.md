@@ -11,3 +11,5 @@
 * ~~When sending messages to the model include the last n interactions (for "memory").~~
 * ~~Save attachements to database~~
 * ~~Implament RAG~~
+* ~~Require a model to be selected to send a chat~~
+* ~~Require a web search url when making web searchs~~

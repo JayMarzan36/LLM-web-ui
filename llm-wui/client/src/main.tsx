@@ -14,6 +14,7 @@ import {
   get_chats,
   load_chat,
   get_models,
+  get_first_four_words,
 } from "./components/chat_functions";
 import {
   update_settings,
@@ -33,7 +34,10 @@ export default function App() {
   const [message_counter, set_message_counter] = useState(0);
   const [settings_loaded, set_settings_loaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [models, set_models] = useState([]);
+  const [models, set_models] = useState<Array<String>>([]);
+  const [model_list, set_model_list] = useState<
+    { label: String; value: String }[]
+  >([{ label: "", value: "" }]);
   let initial_settings = useRef({ ollama_http: "", api_url: "" });
 
   async function logout() {
@@ -113,31 +117,39 @@ export default function App() {
       set_messages,
       setIsLoading
     );
-    if (!current_chat_id) {
-      handle_new_chat();
-    }
+    set_chats((prev_chats) =>
+      prev_chats.map((chat) => {
+        if (chat.id === current_chat_id && chat.title === "New Chat") {
+          const new_title = get_first_four_words(content);
+          return { ...chat, title: new_title };
+        }
+        return chat;
+      })
+    );
   };
 
   useEffect(() => {
-    get_chats(set_chats);
-    load_settings(set_ollama_http, set_api_url, initial_settings).then(() => {
-      set_settings_loaded(true);
-    });
+    if (settings_loaded === false) {
+      get_chats(set_chats);
+      load_settings(set_ollama_http, set_api_url, initial_settings).then(() => {
+        set_settings_loaded(true);
+      });
+    }
   }, []);
 
   useEffect(() => {
-    get_models(ollama_http, set_models);
-  }, [ollama_http]);
+    if (settings_loaded) {
+      get_models(ollama_http, set_models);
+    }
+  }, [settings_loaded]);
 
   useEffect(() => {
-    if (!settings_loaded) return;
-    const changed =
-      ollama_http !== initial_settings.current.ollama_http ||
-      api_url !== initial_settings.current.api_url;
-    if (changed) {
-      update_settings(ollama_http, api_url);
+    let temp_list = [];
+    for (const model of models) {
+      temp_list.push({ label: model, value: model });
     }
-  }, [ollama_http, api_url, settings_loaded]);
+    set_model_list(temp_list);
+  }, [models]);
 
   return (
     <div className="flex h-full min-h-screen bg-background">
@@ -160,13 +172,13 @@ export default function App() {
         <ChatHeader
           selected_model={selected_model}
           on_model_change={set_selected_model}
-          model_list={models}
+          model_list={model_list}
           on_logout={logout}
         />
 
         {/* Messages */}
         <ScrollArea
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto overflow-x-hidden"
           view_port_ref={scrollRef}
         >
           <div className="min-h-full">
@@ -178,7 +190,7 @@ export default function App() {
                 attachments={message.attachments}
               />
             ))}
-            {isLoading && <ChatMessage role="assistant" content="....." />}
+            {isLoading && <ChatMessage role="assistant" content="...." />}
           </div>
         </ScrollArea>
 
@@ -188,6 +200,8 @@ export default function App() {
           disabled={isLoading}
           web_search={web_search}
           onWebSearchChange={set_web_search}
+          selected_model={selected_model}
+          api_url={api_url}
         />
       </div>
 
@@ -199,6 +213,9 @@ export default function App() {
         onollama_httpChange={set_ollama_http}
         api_url={api_url}
         on_api_url_change={set_api_url}
+        save_settings={update_settings}
+        set_models={set_models}
+        get_models={get_models}
       />
     </div>
   );

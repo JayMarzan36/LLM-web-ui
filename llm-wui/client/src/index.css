@@ -976,6 +976,22 @@ body,
     background-color: var(--color-zinc-800);
   }
 
+  .bounce {
+    animation: bounce 1s infinite alternate;
+  }
+
+  @keyframes bounce {
+    0% {
+      transform: translateY(-5px);
+    }
+    50% { 
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(5px);
+    }
+  }
+
   .fill-primary {
     fill: var(--primary);
   }

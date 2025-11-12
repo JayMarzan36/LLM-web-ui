@@ -7,6 +7,14 @@ import {
 } from "./ui/dialog";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { Save } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -15,6 +23,9 @@ interface SettingsDialogProps {
   onollama_httpChange: (url: string) => void;
   api_url: string;
   on_api_url_change: (url: string) => void;
+  save_settings: (url_1: string, url_2: string) => void;
+  set_models: (value: Array<String>) => void;
+  get_models: (value_1: string, value_2: (value: Array<String>) => void) => void;
 }
 
 export function SettingsDialog({
@@ -24,6 +35,9 @@ export function SettingsDialog({
   onollama_httpChange,
   api_url,
   on_api_url_change,
+  save_settings,
+  set_models,
+  get_models
 }: SettingsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,6 +72,28 @@ export function SettingsDialog({
             <p className="text-xs text-muted-foreground">
               The URL where your SearXNG is running.
             </p>
+          </div>
+          <div className="space-x-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => {
+                      save_settings(ollama_http, api_url);
+                      get_models(ollama_http, set_models);
+                    }}
+                    className="h-[44px] w-[44px]"
+                    size="icon"
+                    aria-label="Save"
+                  >
+                    <Save className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Save settings</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </DialogContent>

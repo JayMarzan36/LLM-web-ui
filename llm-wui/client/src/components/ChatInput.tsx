@@ -15,6 +15,8 @@ interface ChatInputProps {
   disabled?: boolean;
   web_search: boolean;
   onWebSearchChange: (enabled: boolean) => void;
+  selected_model: string;
+  api_url: string
 }
 
 export function ChatInput({
@@ -22,6 +24,8 @@ export function ChatInput({
   disabled,
   web_search,
   onWebSearchChange,
+  selected_model,
+  api_url
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -38,7 +42,9 @@ export function ChatInput({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      if (selected_model !== "") {
+        handleSend();
+      }
     }
   };
 
@@ -140,7 +146,7 @@ export function ChatInput({
                     variant={web_search ? "default" : "outline"}
                     size="icon"
                     className="h-[44px] w-[44px]"
-                    disabled={disabled}
+                    disabled={api_url === "" ? true : disabled}
                     aria-label="Toggle web search"
                   >
                     <Globe className="h-4 w-4" />
@@ -156,7 +162,7 @@ export function ChatInput({
             <Button
               onClick={handleSend}
               disabled={
-                (!message.trim() && attachments.length === 0) || disabled
+                selected_model === "" ? true : selected_model !== "" ? (!message.trim() && attachments.length === 0) : disabled
               }
               size="icon"
               className="h-[44px] w-[44px]"

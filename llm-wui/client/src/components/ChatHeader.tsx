@@ -12,7 +12,7 @@ import { LogOut } from "lucide-react";
 interface ChatHeaderProps {
   selected_model: string;
   on_model_change: (model: string) => void;
-  model_list: Array<string>;
+  model_list: { label: String, value: String }[];
   on_logout: () => void;
 }
 
@@ -26,11 +26,7 @@ export function ChatHeader({
   model_list,
   on_logout,
 }: ChatHeaderProps) {
-  let models = [];
 
-  for (const model of model_list) {
-    models.push({ label: model, value: model });
-  }
   return (
     <header className="border-b px-3 py-2 shrink-0">
       <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
@@ -50,7 +46,7 @@ export function ChatHeader({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {models.map((model) => (
+              {model_list.map((model) => (
                 <SelectItem key={model.value} value={model.value}>
                   {model.label}
                 </SelectItem>

@@ -23,7 +23,7 @@ export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
         isUser ? "bg-background" : "bg-muted/30"
       }`}
     >
-      <div className="w-full max-w-4xl mx-auto flex gap-3">
+      <div className="w-full max-w-screen-lg mx-auto flex gap-2 flex-wrap">
         <Avatar className="h-7 w-7 shrink-0">
           <AvatarFallback
             className={
@@ -67,36 +67,73 @@ export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
             </div>
           )}
 
-          <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={{
-                code({ node, inline, className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || "");
-                  return !inline && match ? (
-                    <SyntaxHighlighter
-                      style={oneDark}
-                      language={match[1]}
-                      PreTag="div"
-                      {...props}
-                    >
-                      {String(children).replace(/\n$/, "")}
-                    </SyntaxHighlighter>
-                  ) : (
-                    <code
-                      className="bg-muted px-1 py-0.5 rounded text-sm"
-                      {...props}
-                    >
-                      {children}
-                    </code>
-                  );
-                },
-              }}
-            >
-              {content}
-            </ReactMarkdown>
-          </div>
+          {content === "...." && (
+            <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap bounce">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    return !inline && match ? (
+                      <SyntaxHighlighter
+                        style={oneDark}
+                        language={match[1]}
+                        className="overflow-auto rounded-md max-w-full"
+                        PreTag="div"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, "")}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code
+                        className="bg-muted px-1 py-0.5 rounded text-sm"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
+          )}
+
+          {content !== "...." && (
+            <div className="prose prose-sm max-w-full dark:prose-invert whitespace-pre-wrap break-words">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    return !inline && match ? (
+                      <SyntaxHighlighter
+                        style={oneDark}
+                        language={match[1]}
+                        className="overflow-auto rounded-md max-w-full"
+                        PreTag="div"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, "")}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code
+                        className="bg-muted px-1 py-0.5 rounded text-sm"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
       </div>
     </div>
