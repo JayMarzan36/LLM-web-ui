@@ -178,7 +178,7 @@ export default function App() {
 
         {/* Messages */}
         <ScrollArea
-          className="flex-1 overflow-y-auto overflow-x-hidden"
+          className="flex-1 overflow-y-auto overflow-x-auto"
           view_port_ref={scrollRef}
         >
           <div className="min-h-full">

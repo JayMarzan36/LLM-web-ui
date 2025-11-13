@@ -69,70 +69,50 @@ export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
           )}
 
           {content === "...." && (
-            <div className="prose prose-sm max-w-none dark:prose-invert whitespace-pre-wrap bounce">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || "");
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        style={oneDark}
-                        language={match[1]}
-                        className="overflow-auto rounded-md max-w-full"
-                        PreTag="div"
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, "")}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code
-                        className="bg-muted px-1 py-0.5 rounded text-sm"
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    );
-                  },
-                }}
-              >
-                {content}
-              </ReactMarkdown>
+            <div className="max-w-none dark:prose-invert whitespace-pre-wrap bounce">
+              Thinking
             </div>
           )}
 
           {content !== "...." && (
-            <div className=" max-w-full dark:prose-invert whitespace-pre-wrap mr-2 break-words">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={{
-                  code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || "");
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        style={oneDark}
-                        language={match[1]}
-                        className="overflow-auto rounded-md max-w-full"
-                        PreTag="div"
+            <div className="w-full overflow-x-auto">
+              <div className="prose prose-neutral max-w-none w-full dark:prose-invert break-words">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                  components={{
+                    pre: ({ node, ...props }) => (
+                      <pre
                         {...props}
-                      >
-                        {String(children).replace(/\n$/, "")}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code
-                        className="bg-muted px-1 py-0.5 rounded text-sm"
-                        {...props}
-                      >
-                        {children}
-                      </code>
-                    );
-                  },
-                }}
-              >
-                {content}
-              </ReactMarkdown>
+                        className="rounded-md p-3 text-sm max-w-full"
+                      />
+                    ),
+                    code({ node, inline, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || "");
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          style={oneDark}
+                          language={match[1]}
+                          className="rounded-md max-w-full"
+                          PreTag="div"
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, "")}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code
+                          className="bg-muted px-1 py-0.5 rounded text-sm break-all"
+                          {...props}
+                        >
+                          {children}
+                        </code>
+                      );
+                    },
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+              </div>
             </div>
           )}
         </div>

@@ -1064,6 +1064,16 @@ body,
     padding-left: calc(var(--spacing) * 2);
   }
 
+  .prose {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .prose pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   .text-center {
     text-align: center;
   }
