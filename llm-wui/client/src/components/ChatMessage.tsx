@@ -13,6 +13,7 @@ interface ChatMessageProps {
   content: string;
   attachments?: Attachment[];
 }
+//TODO: make sure the content being displayed can be viewed and fit on a small window size
 
 export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
   const isUser = role === "user";
@@ -102,7 +103,7 @@ export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
           )}
 
           {content !== "...." && (
-            <div className="prose prose-sm max-w-full dark:prose-invert whitespace-pre-wrap break-words">
+            <div className=" max-w-full dark:prose-invert whitespace-pre-wrap mr-2 break-words">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw]}
