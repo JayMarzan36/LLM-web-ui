@@ -183,12 +183,14 @@ export default function App() {
         >
           <div className="min-h-full">
             {messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                role={message.role}
-                content={message.content}
-                attachments={message.attachments}
-              />
+              <div className={`min-h-full chat-bubble `}>
+                <ChatMessage
+                  key={message.id}
+                  role={message.role}
+                  content={message.content}
+                  attachments={message.attachments}
+                />
+              </div>
             ))}
             {isLoading && <ChatMessage role="assistant" content="...." />}
           </div>

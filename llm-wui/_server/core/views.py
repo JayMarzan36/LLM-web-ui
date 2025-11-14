@@ -125,9 +125,9 @@ def generate_llm_prompt(req, current_chat_id: int, body: dict, web_url: str):
 
     if body["search_web"]:
         search_result = web_search(web_url, body["message"]["content"])
-
+        print(search_result)
         if search_result == None:
-            return JsonResponse({"response": "Error getting response"})
+            search_result = "No search results"
 
         prompt += f"""
         Here are the top search results (in JSON):

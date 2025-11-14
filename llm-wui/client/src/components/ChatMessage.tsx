@@ -13,8 +13,6 @@ interface ChatMessageProps {
   content: string;
   attachments?: Attachment[];
 }
-//TODO: make sure the content being displayed can be viewed and fit on a small window size
-
 export function ChatMessage({ role, content, attachments }: ChatMessageProps) {
   const isUser = role === "user";
 
