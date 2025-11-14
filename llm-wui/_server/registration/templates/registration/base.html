@@ -6,8 +6,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <style>
-    /* style your login pages here because the normal
-      static asset flow is different now */
+    :root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: #e6eceb;
+  background-color: #7a7a7a;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+a {
+  font-weight: 500;
+  color: #e6eceb;
+  text-decoration: inherit;
+  transition: all 0.25s;
+}
+
+a:hover {
+  color: #ff7f11;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+label {
+  padding: 10px;
+}
+
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.submit {
+  flex: auto;
+  justify-content: center;
+  text-align: center;
+}
+
+form > div {
+  padding: 15px;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #525252;
+  cursor: pointer;
+  color: #e6eceb;
+  transition: all 0.25s;
+}
+button:hover {
+  background-color: #ff7f11;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
   </style>
 </head>
 <body>

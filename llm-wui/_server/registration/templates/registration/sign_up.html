@@ -6,27 +6,31 @@
   <div>
     <label>
       First Name
-      <input type="text" name="first_name">
+      <input type="text" name="first_name" required>
     </label>
   </div>
   <div>
     <label>
       Last Name
-      <input type="text" name="last_name">
+      <input type="text" name="last_name" required>
     </label>
   </div>
   <div>
     <label>
       Email
-      <input type="email" name="email">
+      <input type="email" name="email" required>
     </label>
   </div>
   <div>
     <label>
       Password
-      <input type="password" name="password">
+      <input type="password" name="password" required>
     </label>
   </div>
-  <button>Create Account</button>
+  <div class="submit">
+    <button >Create Account</button>
+  </div>
 </form>
+
+<a href="/registration/sign_in/">Back to Login</a>
 {% endblock %}

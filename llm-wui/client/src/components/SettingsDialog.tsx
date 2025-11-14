@@ -26,6 +26,7 @@ interface SettingsDialogProps {
   save_settings: (url_1: string, url_2: string) => void;
   set_models: (value: Array<String>) => void;
   get_models: (value_1: string, value_2: (value: Array<String>) => void) => void;
+  style: string;
 }
 
 export function SettingsDialog({
@@ -37,11 +38,13 @@ export function SettingsDialog({
   on_api_url_change,
   save_settings,
   set_models,
-  get_models
+  get_models,
+  style
 }: SettingsDialogProps) {
+  //TODO: Add setting for saving whether or not the user is using dark mode or light mode
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className={`sm:max-w-[500px] ${style === "dark" ? "dark" : "light"}`}>
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
