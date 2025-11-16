@@ -8,7 +8,7 @@ import {
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { Save } from "lucide-react";
+import { Save, Sunrise, Sunset } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -23,10 +23,11 @@ interface SettingsDialogProps {
   onollama_httpChange: (url: string) => void;
   api_url: string;
   on_api_url_change: (url: string) => void;
-  save_settings: (url_1: string, url_2: string) => void;
+  save_settings: (url_1: string, url_2: string, style: string) => void;
   set_models: (value: Array<String>) => void;
   get_models: (value_1: string, value_2: (value: Array<String>) => void) => void;
-  style: string;
+  style: "dark" | "light";
+  set_style: (value: "dark" | "light") => void;
 }
 
 export function SettingsDialog({
@@ -39,12 +40,14 @@ export function SettingsDialog({
   save_settings,
   set_models,
   get_models,
-  style
+  style,
+  set_style,
 }: SettingsDialogProps) {
-  //TODO: Add setting for saving whether or not the user is using dark mode or light mode
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={`sm:max-w-[500px] ${style === "dark" ? "dark" : "light"}`}>
+      <DialogContent
+        className="sm:max-w-[500px]"
+      >
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>
@@ -76,13 +79,37 @@ export function SettingsDialog({
               The URL where your SearXNG is running.
             </p>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="api-url">Mode</Label>
+            <Button
+              onClick={() => {
+                let temp_style = style;
+                if (style === "light") {
+                  temp_style = "dark";
+                } else {
+                  temp_style = "light";
+                }
+                set_style(temp_style);
+              }}
+            >
+              {style === "dark" && (
+                <Sunset/>
+              )}
+
+              {style === "light" && (
+                <Sunrise/>
+              )}
+
+            </Button>
+
+          </div>
           <div className="space-x-2">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     onClick={() => {
-                      save_settings(ollama_http, api_url);
+                      save_settings(ollama_http, api_url, style);
                       get_models(ollama_http, set_models);
                     }}
                     className="h-[44px] w-[44px]"

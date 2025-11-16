@@ -14,7 +14,6 @@ interface ChatHeaderProps {
   on_model_change: (model: string) => void;
   model_list: { label: String; value: String }[];
   on_logout: () => void;
-  style: string;
 }
 
 
@@ -26,7 +25,6 @@ export function ChatHeader({
   on_model_change,
   model_list,
   on_logout,
-  style
 }: ChatHeaderProps) {
 
   return (
@@ -49,7 +47,7 @@ export function ChatHeader({
             </SelectTrigger>
             <SelectContent>
               {model_list.map((model) => (
-                <SelectItem key={model.value} value={model.value} className={`${style === "dark" ? "dark" : "light"}`}>
+                <SelectItem key={model.value} value={model.value}>
                   {model.label}
                 </SelectItem>
               ))}

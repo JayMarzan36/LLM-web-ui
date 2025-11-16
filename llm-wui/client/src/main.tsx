@@ -34,6 +34,7 @@ export default function App() {
   const [message_counter, set_message_counter] = useState(0);
   const [settings_loaded, set_settings_loaded] = useState(false);
   const [selected_style, set_selected_style] = useState<"dark" | "light">("light");
+  const html = document.documentElement;
   const scrollRef = useRef<HTMLDivElement>(null);
   const [models, set_models] = useState<Array<String>>([]);
   const [model_list, set_model_list] = useState<
@@ -131,8 +132,9 @@ export default function App() {
 
   useEffect(() => {
     if (settings_loaded === false) {
+      html.classList.add(selected_style);
       get_chats(set_chats);
-      load_settings(set_ollama_http, set_api_url, initial_settings).then(() => {
+      load_settings(set_ollama_http, set_api_url, set_selected_style, initial_settings).then(() => {
         set_settings_loaded(true);
       });
     }
@@ -152,11 +154,21 @@ export default function App() {
     set_model_list(temp_list);
   }, [models]);
 
+  useEffect(() => {
+    if (settings_loaded) {
+      if (html.classList.contains("dark")) {
+        html.classList.remove("dark");
+        html.classList.add("light");
+      } else {
+        html.classList.remove("light");
+        html.classList.add("dark");
+      }
+    }
+  }, [selected_style]);
+
   return (
     <div
-      className={`flex h-full min-h-screen bg-background ${
-        selected_style === "dark" ? "dark" : "light"
-      }`}
+      className="flex h-full min-h-screen bg-background"
     >
       <ToastContainer />
       {/* Sidebar */}
@@ -179,7 +191,6 @@ export default function App() {
           on_model_change={set_selected_model}
           model_list={model_list}
           on_logout={logout}
-          style={selected_style}
         />
 
         {/* Messages */}
@@ -225,6 +236,7 @@ export default function App() {
         set_models={set_models}
         get_models={get_models}
         style={selected_style}
+        set_style={set_selected_style}
       />
     </div>
   );

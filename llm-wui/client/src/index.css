@@ -101,7 +101,7 @@
   --input: #444;
   --input-background: #fff;
   --switch-background: #ccc;
-  --font-size: 16px;
+  --font-size: 13px;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --ring: #ffc107;
@@ -141,7 +141,7 @@
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
   --border: #660000;
-  --input: #0d0d0d;
+  --input: #000000;
   --input-background: #1a1a1a;
   --switch-background: #330000;
   --font-size: 13px;
@@ -205,6 +205,7 @@ body,
     line-height: inherit;
     height: 100vh;
     width: 100vw;
+    color:var(--foreground);
   }
 
   hr {

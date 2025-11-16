@@ -381,12 +381,14 @@ def update_settings(req):
             body = json.loads(req.body)
             ollama_url = body["ollama_url"]
             search_url = body["search_url"]
+            style = body["style"]
             user_settings, created = Settings.objects.get_or_create(
                 user=req.user,
                 defaults={
                     "user": req.user,
                     "ollama_url": ollama_url,
                     "search_url": search_url,
+                    "style": "light"
                 },
             )
             if created:
@@ -395,6 +397,7 @@ def update_settings(req):
                 user_settings.user = req.user
                 user_settings.ollama_url = ollama_url
                 user_settings.search_url = search_url
+                user_settings.style = style
                 user_settings.save()
             return JsonResponse({"response": "Successful"})
         except:
@@ -414,13 +417,22 @@ def load_settings(req):
     """
     if req.method == "GET":
         try:
-            user_settings = Settings.objects.get(user=req.user)
+            user_settings, created = Settings.objects.get_or_create(
+                user=req.user,
+                defaults={
+                    "user": req.user,
+                    "ollama_url": "http://127.0.0.1:11434",
+                    "search_url": "",
+                    "style": "light",
+                },
+            )
 
             return JsonResponse(
                 {
                     "response": {
                         "ollama_url": user_settings.ollama_url,
                         "api_url": user_settings.search_url,
+                        "style": user_settings.style
                     }
                 }
             )
