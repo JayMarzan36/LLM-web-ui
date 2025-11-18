@@ -15,3 +15,14 @@ Using Node for front end and python for the backend and making API calls to Olla
 * embeddinggemma:300m (embedding model)
 ## Optional
 * SearXNG
+
+
+
+# Instructions
+You will have to add a .env file into `_server/.env` and set the contents to only be `ASSET_URL=""`.
+
+Aswell as building the frontend and then build the docker image.
+
+You can build the frontend by going into the `client` folder and running `npm run build`.
+
+And then in the root of the app running `docker compose build`.
