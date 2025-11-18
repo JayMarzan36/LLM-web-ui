@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: _server/Dockerfile
+    container_name: llm_wui_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./_server/db.sqlite3:/app/_server/db.sqlite3
+      - ./document_storage:/app/document_storage
+    env_file:
+      - ./.env
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+
+# volumes could be declared here if you want named volumes
+networks:
+  default:
+    driver: bridge

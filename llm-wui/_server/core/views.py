@@ -15,8 +15,47 @@ import base64
 
 MANIFEST = {}
 if not settings.DEBUG:
-    f = open(f"{settings.BASE_DIR}/core/static/manifest.json")
-    MANIFEST = json.load(f)
+    # Prefer the collected STATIC_ROOT/manifest.json (where the Docker build copies files).
+    manifest_path = os.path.join(settings.STATIC_ROOT, "manifest.json")
+    # Fallback to the old location if present in the source tree.
+    if not os.path.exists(manifest_path):
+        manifest_path = os.path.join(
+            settings.BASE_DIR, "core", "static", "manifest.json"
+        )
+        # Vite may write `manifest.json` either at the root of the build folder
+        # or under a `.vite/` subfolder. Check multiple candidate locations so
+        # the server can find the manifest regardless of how Vite was configured.
+        candidates = [
+            os.path.join(settings.STATIC_ROOT, "manifest.json"),
+            os.path.join(settings.STATIC_ROOT, ".vite", "manifest.json"),
+            os.path.join(settings.STATIC_ROOT, "core", "manifest.json"),
+            os.path.join(settings.STATIC_ROOT, "core", ".vite", "manifest.json"),
+            os.path.join(settings.BASE_DIR, "core", "static", "manifest.json"),
+            os.path.join(
+                settings.BASE_DIR, "core", "static", "core", ".vite", "manifest.json"
+            ),
+        ]
+
+        manifest_path = None
+        for candidate in candidates:
+            if candidate and os.path.exists(candidate):
+                manifest_path = candidate
+                break
+
+        if manifest_path:
+            try:
+                with open(manifest_path, "r", encoding="utf-8") as f:
+                    MANIFEST = json.load(f)
+            except Exception:
+                MANIFEST = {}
+        else:
+            MANIFEST = {}
+
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            MANIFEST = json.load(f)
+    except Exception:
+        MANIFEST = {}
 
 
 def extract_text_from_file(file_path: str) -> str:
@@ -58,12 +97,30 @@ def extract_text_from_file(file_path: str) -> str:
 
 @login_required
 def index(req):
+    # determine the manifest key for the main entry (support jsx/ts variants)
+    js_key = None
+    for candidate in ("src/main.jsx", "src/main.ts", "src/main.tsx", "src/main.js"):
+        if candidate in MANIFEST:
+            js_key = candidate
+            break
+
+    js_file = ""
+    css_file = ""
+    if not settings.DEBUG and js_key:
+        entry = MANIFEST.get(js_key, {})
+        js_file = entry.get("file", "")
+        css_list = entry.get("css", [])
+        css_file = css_list[0] if css_list else ""
+
+    # Only use ASSET_URL when in DEBUG (development); in production we serve local static files
+    asset_url = os.environ.get("ASSET_URL", "") if settings.DEBUG else ""
+
     context = {
-        "asset_url": os.environ.get("ASSET_URL", ""),
+        "asset_url": asset_url,
         "debug": settings.DEBUG,
         "manifest": MANIFEST,
-        "js_file": "" if settings.DEBUG else MANIFEST["src/main.ts"]["file"],
-        "css_file": "" if settings.DEBUG else MANIFEST["src/main.ts"]["css"][0],
+        "js_file": js_file,
+        "css_file": css_file,
     }
     return render(req, "core/index.html", context)
 
@@ -157,7 +214,9 @@ def send_chat(req):
 
         user_message = body["message"]
 
-        file_directory = os.path.join(settings.BASE_DIR, f"document_storage/f{req.user}")
+        file_directory = os.path.join(
+            settings.BASE_DIR, f"document_storage/f{req.user}"
+        )
         os.makedirs(file_directory, exist_ok=True)
 
         attachments = user_message.get("attachments", [])
@@ -183,7 +242,8 @@ def send_chat(req):
                 continue
 
             temp_path = os.path.join(
-                file_directory, f"{req.user}_{current_chat_id}_{interaction_counter}_{file_name}"
+                file_directory,
+                f"{req.user}_{current_chat_id}_{interaction_counter}_{file_name}",
             )
             with open(temp_path, "wb") as f:
                 f.write(file_bytes)
@@ -388,7 +448,7 @@ def update_settings(req):
                     "user": req.user,
                     "ollama_url": ollama_url,
                     "search_url": search_url,
-                    "style": "light"
+                    "style": "light",
                 },
             )
             if created:
@@ -432,7 +492,7 @@ def load_settings(req):
                     "response": {
                         "ollama_url": user_settings.ollama_url,
                         "api_url": user_settings.search_url,
-                        "style": user_settings.style
+                        "style": user_settings.style,
                     }
                 }
             )
